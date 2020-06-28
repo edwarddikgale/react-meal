@@ -1,13 +1,15 @@
 import React from 'react';
-import {View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Platform} from 'react-native';
+import {StyleSheet, FlatList} from 'react-native';
 import {HeaderButtons, Item} from 'react-navigation-header-buttons';
-import CategoryModel from '../models/CategoryModel';
 import { CATEGORIES } from '../data/dummy-data';
-import Colors from '../constants/Colors';
 import CategoryGridTile from '../components/CategoryGridTile';
 import HeaderButton from '../components/HeaderButton';
+import { useSelector } from 'react-redux';
+import { MealsState } from '../store/states/meals.state';
 
 const CategoriesScreen = (props:any) => {
+    const favMeals = useSelector((state:MealsState) => state.meals.favoriteMeals);
+
     const renderGridItem = (itemData:any) => {
         return (
             <CategoryGridTile 
@@ -35,7 +37,7 @@ const CategoriesScreen = (props:any) => {
 CategoriesScreen.navigationOptions = (navData: any) => {
     return {
         headerTitle: 'Meal Categories',
-        headerLeft: <HeaderButtons HeaderButtonComponent={HeaderButton} >
+        headerLeft: () => <HeaderButtons HeaderButtonComponent={HeaderButton} >
             <Item 
                 title="Menu" 
                 iconName="ios-menu" 

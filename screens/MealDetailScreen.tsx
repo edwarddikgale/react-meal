@@ -1,18 +1,32 @@
-import React from 'react';
+import React, {useEffect, useCallback} from 'react';
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
-import {MEALS} from '../data/dummy-data';
+import {useSelector, useDispatch} from 'react-redux';
+import {MealsState} from '../store/states/meals.state';
 import MealModel from '../models/meal.model';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import CustomHeaderButton from '../components/HeaderButton';
 import MealItem from '../components/MealItem';
-
-const getMeal = (mealId: string): MealModel => {
-    return MEALS.find(meal => meal.id === mealId) as unknown as MealModel;
-}
+import { toggleFavorite } from '../store/actions/meals.actions';
 
 const MealDetailScreen = (props:any) => {
+    const {navigation} = props;
 
-    const meal = getMeal(props.navigation.getParam('mealId'));
+    const meals = useSelector((state: MealsState) => state.meals.meals);
+    const meal = meals.find(meal => meal.id === navigation.getParam('mealId')) as unknown as MealModel;
+    
+    const dispatch = useDispatch();
+    const toggleFavHandler = useCallback(() => {
+        const mealId = meal.id;
+        dispatch(toggleFavorite(mealId));
+    }, [dispatch, meal]); 
+    
+    useEffect(()=> {
+        props.navigation.setParams({
+            selectedMeal: meal,
+            toggleFav: toggleFavHandler
+        })
+    }, [meal, toggleFavHandler]);
+
     const renderList = (data: string[]) => {
         return (
             data.map(item =>
@@ -35,35 +49,40 @@ const MealDetailScreen = (props:any) => {
                 <View>
                     <Text style={styles.title}>Ingredients</Text>
                 </View>
-                <View style={styles.itemList}>{renderList(meal.ingredients)}</View>
+                <View style={styles.itemList}>
+                    {renderList(meal.ingredients)}
+                </View>
             </View>
             <View style={styles.listsContainer}>
                 <View>
                     <Text style={styles.title}>Steps</Text>
                 </View>
-                <View style={styles.itemList}>{renderList(meal.steps)}</View>
+                <View style={styles.itemList}>
+                    {renderList(meal.steps)}
+                </View>
             </View>
         </ScrollView>        
     )
 };
 
 MealDetailScreen.navigationOptions = (navData:any) =>{
-    const meal = getMeal(navData.navigation.getParam('mealId'));
+    const meal = navData.navigation.getParam('selectedMeal') as MealModel; 
+    const title = meal && meal != undefined? meal.title: ''; 
+    const toggleFavFn = navData.navigation.getParam('toggleFav');
+
     return {
-        headerTitle: meal.title,
-        headerRight: ( 
+        headerTitle: title,
+        headerRight: () => ( 
         <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
             <Item 
                 title='Favorite' 
                 iconName='ios-star' 
-                onPress={()=>{
-                    console.log('Hammarby');
-                }} />
+                onPress={toggleFavFn} />
             <Item 
                 title='Yo'
                 iconName='ios-help'
                 onPress={()=>{
-                    console.log('Help');
+                    
                 }}
             />   
         </HeaderButtons>
@@ -79,7 +98,10 @@ const styles = StyleSheet.create({
     },
     title:{
         fontFamily: 'open-sans-bold',
-        fontSize: 16
+        fontSize: 16,
+        textTransform: 'uppercase',
+        justifyContent: 'center',
+        alignContent: 'center'
     },
     listItem:{
         padding: 5,
